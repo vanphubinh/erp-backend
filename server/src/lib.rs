@@ -1,4 +1,5 @@
 use axum::Router;
+use sea_orm::{Database, DatabaseConnection, DbErr};
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tower_http::trace::{self, TraceLayer};
@@ -6,6 +7,8 @@ use tracing::Level;
 
 #[tokio::main]
 pub async fn start() {
+  dotenvy::dotenv().ok();
+
   tracing_subscriber::fmt()
     .with_max_level(tracing::Level::DEBUG)
     .with_test_writer()
@@ -20,4 +23,10 @@ pub async fn start() {
 
   tracing::debug!("Listening on http://{}", addr);
   axum::serve(tcp, router).await.unwrap();
+}
+
+pub async fn get_db_connection() -> Result<DatabaseConnection, DbErr> {
+  let db_url = std::env::var("DATABASE_URL").unwrap();
+  let db = Database::connect(&db_url).await?;
+  Ok(db)
 }
