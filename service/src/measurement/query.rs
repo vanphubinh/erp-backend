@@ -43,7 +43,7 @@ impl IntoResponse for ListUomsError {
 pub async fn list_paginated_uoms_query(
   query: ListPaginatedUomsQuery,
   db: &impl ConnectionTrait,
-) -> Result<PaginatedResponse<UomDTO>, DbErr> {
+) -> Result<PaginatedResponse<UomDTO>, ListUomsError> {
   let per_page = query.per_page.unwrap_or(30);
   let page = query.page.unwrap_or(1) - 1;
 
