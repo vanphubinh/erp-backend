@@ -6,9 +6,10 @@ use domain::measurement::uom::{Column, Entity as Uom, UomDTO};
 use infra::{
   response::{PaginatedResponse, PaginationMeta},
   util::error,
+  uuid::Uuid,
 };
 use sea_orm::{ConnectionTrait, DbErr, EntityTrait, PaginatorTrait, QuerySelect};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Debug, Deserialize)]
@@ -68,4 +69,54 @@ pub async fn list_paginated_uoms_query(
       total,
     },
   })
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FindUomByIdQuery {
+  pub id: Uuid,
+}
+
+#[derive(Debug, Serialize)]
+pub struct FindUomByIdOutput {
+  pub id: Uuid,
+  pub name: String,
+}
+
+#[derive(Error, Debug)]
+pub enum FindUomByIdError {
+  #[error("internal_server_error")]
+  InternalServerError(#[from] DbErr),
+  #[error("record_not_found")]
+  RecordNotFound,
+}
+
+impl IntoResponse for FindUomByIdError {
+  fn into_response(self) -> Response {
+    let (status, code) = match self {
+      FindUomByIdError::RecordNotFound => (StatusCode::NOT_FOUND, self.to_string()),
+      FindUomByIdError::InternalServerError(_) => {
+        (StatusCode::INTERNAL_SERVER_ERROR, self.to_string())
+      }
+    };
+
+    (
+      status,
+      error(code, Some("find_uom_by_id_query".to_string())),
+    )
+      .into_response()
+  }
+}
+
+pub async fn find_uom_by_id_query(
+  id: Uuid,
+  db: &impl ConnectionTrait,
+) -> Result<Option<UomDTO>, DbErr> {
+  let uom = Uom::find_by_id(id)
+    .select_only()
+    .column(Column::Id)
+    .column(Column::Name)
+    .into_partial_model::<UomDTO>()
+    .one(db)
+    .await?;
+  Ok(uom)
 }

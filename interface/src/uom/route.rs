@@ -1,4 +1,4 @@
-use super::handler::{create_uom, list_paginated_uoms};
+use super::handler::{create_uom, find_uom_by_id, list_paginated_uoms};
 use axum::{
   routing::{get, post},
   Router,
@@ -10,4 +10,5 @@ pub fn new() -> Router<Arc<AppState>> {
   Router::new()
     .route("/uoms.list", get(list_paginated_uoms))
     .route("/uoms.create", post(create_uom))
+    .route("/uoms.find/:id", get(find_uom_by_id))
 }
