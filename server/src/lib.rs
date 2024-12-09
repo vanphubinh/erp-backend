@@ -36,15 +36,13 @@ pub async fn start() {
       return;
     }
   };
-  let app_state = Arc::new(AppState {
-    write_db: Arc::new(write_db),
-    read_db: Arc::new(read_db),
-  });
+  let app_state = Arc::new(AppState { write_db, read_db });
 
   let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
   let tcp = TcpListener::bind(&addr).await.unwrap();
 
   let router = Router::new()
+    .merge(interface::uom::route::new())
     .layer(
       TraceLayer::new_for_http().make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO)),
     )

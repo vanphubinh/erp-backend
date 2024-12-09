@@ -1,0 +1,13 @@
+[package]
+name = "service"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = { workspace = true }
+serde = { workspace = true }
+sea-orm = { workspace = true }
+thiserror = { workspace = true }
+
+infra = { path = "../infra" }
+domain = { path = "../domain" }
