@@ -87,7 +87,6 @@ pub async fn list_paginated_attributes_query(
   }
 
   let attributes_with_options: Vec<AttributeWithOptions> = attribute_map.into_values().collect();
-  tracing::info!("attributes: {:?}", attributes_with_options);
 
   let items_and_pages = attribute_pages.num_items_and_pages().await?;
   let total = items_and_pages.number_of_items;

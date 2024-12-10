@@ -2,9 +2,7 @@
 
 use async_trait::async_trait;
 use infra::uuid::Uuid;
-use sea_orm::{
-  entity::prelude::*, ActiveModelTrait, DerivePartialModel, FromQueryResult, Set, TryGetable,
-};
+use sea_orm::{entity::prelude::*, ActiveModelTrait, Set};
 use serde::{Deserialize, Serialize};
 
 use super::attribute_option::AttributeOptionDTO;
