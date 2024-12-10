@@ -40,7 +40,7 @@ pub struct ListPaginatedAttributesQuery {
   pub per_page: Option<u64>,
 }
 
-#[derive(Debug, Serialize, FromQueryResult)]
+#[derive(Debug, Serialize, FromQueryResult, Deserialize)]
 pub struct AttributeWithOptionsQueryOutput {
   pub id: Uuid,
   pub name: String,

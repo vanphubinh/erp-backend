@@ -2,14 +2,18 @@ use std::collections::HashMap;
 
 use domain::catalog::{
   attribute::{AttributeWithOptions, Column, Entity as Attribute},
-  attribute_option::{AttributeOptionDTO, Entity as AttributeOption},
+  attribute_option::{self, AttributeOptionDTO, Entity as AttributeOption},
   category::{CategoryDTO, Entity as Category},
 };
 use infra::{
   response::{PaginatedResponse, PaginationMeta},
   uuid::Uuid,
 };
-use sea_orm::{ConnectionTrait, DbErr, EntityTrait, PaginatorTrait, QuerySelect, SelectColumns};
+use sea_orm::{
+  prelude::Expr,
+  sea_query::{Alias, Asterisk, Query},
+  ConnectionTrait, DbErr, EntityTrait, FromQueryResult, PaginatorTrait, QuerySelect,
+};
 
 use super::definition::{
   AttributeWithOptionsQueryOutput, ListPaginatedAttributesQuery, ListPaginatedCategoriesQuery,
@@ -52,22 +56,38 @@ pub async fn list_paginated_attributes_query(
   let per_page = query.per_page.unwrap_or(30);
   let page = query.page.unwrap_or(1) - 1;
 
-  let attribute_pages = Attribute::find()
-    .left_join(AttributeOption)
-    .select_column(Column::Id)
-    .select_column(Column::Name)
-    .select_column_as(
-      <domain::catalog::attribute_option::Entity as EntityTrait>::Column::Id,
-      "attribute_option_id",
+  let attribute_query = Query::select()
+    .column((Attribute, Column::Id))
+    .column((Attribute, Column::Name))
+    .expr_as(
+      Expr::col((AttributeOption, attribute_option::Column::Value)),
+      Alias::new("attribute_option_value"),
     )
-    .select_column_as(
-      <domain::catalog::attribute_option::Entity as EntityTrait>::Column::Value,
-      "attribute_option_value",
+    .expr_as(
+      Expr::col((AttributeOption, attribute_option::Column::Id)),
+      Alias::new("attribute_option_id"),
     )
-    .into_model::<AttributeWithOptionsQueryOutput>()
-    .paginate(db, per_page);
+    .from_subquery(
+      Query::select()
+        .column(Asterisk)
+        .from(Attribute)
+        .limit(per_page)
+        .offset(page * per_page)
+        .take(),
+      Alias::new("attribute"),
+    )
+    .left_join(
+      AttributeOption,
+      Expr::col((Attribute, Column::Id))
+        .equals((AttributeOption, attribute_option::Column::AttributeId)),
+    )
+    .to_owned();
 
-  let attributes = attribute_pages.fetch_page(page).await?;
+  let builder = db.get_database_backend();
+  let attributes =
+    AttributeWithOptionsQueryOutput::find_by_statement(builder.build(&attribute_query))
+      .all(db)
+      .await?;
 
   let mut attribute_map: HashMap<Uuid, AttributeWithOptions> = HashMap::new();
 
@@ -77,10 +97,10 @@ pub async fn list_paginated_attributes_query(
       .or_insert(AttributeWithOptions {
         id: attribute.id,
         name: attribute.name.clone(),
-        options: Vec::new(),
+        attribute_options: Vec::new(),
       });
 
-    entry.options.push(AttributeOptionDTO {
+    entry.attribute_options.push(AttributeOptionDTO {
       id: attribute.attribute_option_id,
       value: attribute.attribute_option_value,
     });
@@ -88,9 +108,8 @@ pub async fn list_paginated_attributes_query(
 
   let attributes_with_options: Vec<AttributeWithOptions> = attribute_map.into_values().collect();
 
-  let items_and_pages = attribute_pages.num_items_and_pages().await?;
-  let total = items_and_pages.number_of_items;
-  let total_pages = items_and_pages.number_of_pages;
+  let total_attributes = Attribute::find().count(db).await?;
+  let total_pages = (total_attributes as f64 / per_page as f64).ceil() as u64;
 
   Ok(PaginatedResponse::<AttributeWithOptions> {
     ok: true,
@@ -99,7 +118,7 @@ pub async fn list_paginated_attributes_query(
       page: page + 1,
       total_pages,
       per_page,
-      total,
+      total: total_attributes,
     },
   })
 }

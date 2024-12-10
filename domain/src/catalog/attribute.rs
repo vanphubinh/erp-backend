@@ -44,5 +44,5 @@ impl ActiveModelBehavior for ActiveModel {
 pub struct AttributeWithOptions {
   pub id: Uuid,
   pub name: String,
-  pub options: Vec<AttributeOptionDTO>,
+  pub attribute_options: Vec<AttributeOptionDTO>,
 }

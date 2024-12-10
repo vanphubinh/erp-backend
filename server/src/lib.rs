@@ -61,6 +61,7 @@ pub async fn start() {
   let router = Router::new()
     .merge(interface::uom::route::new())
     .merge(interface::category::route::new())
+    .merge(interface::attribute::route::new())
     .layer(cors)
     .layer(
       TraceLayer::new_for_http().make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO)),
