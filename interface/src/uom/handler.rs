@@ -6,11 +6,10 @@ use axum::{
 };
 use infra::{state::AppState, uuid::Uuid};
 use service::measurement::{
-  command::{create_uom_command, CreateUom, CreateUomError},
-  query::{
-    find_uom_by_id_query, list_paginated_uoms_query, FindUomByIdError, ListPaginatedUomsQuery,
-    ListUomsError,
-  },
+  command::create_uom_command,
+  definition::{CreateUomPayload, ListPaginatedUomsQuery},
+  error::{CreateUomError, FindUomByIdError, ListUomsError},
+  query::{find_uom_by_id_query, list_paginated_uoms_query},
 };
 use std::sync::Arc;
 
@@ -24,15 +23,6 @@ pub async fn list_paginated_uoms(
 }
 
 #[axum_macros::debug_handler]
-pub async fn create_uom(
-  State(state): State<Arc<AppState>>,
-  Json(payload): Json<CreateUom>,
-) -> Result<impl IntoResponse, CreateUomError> {
-  let meta = create_uom_command(payload, &state.write_db).await?;
-  Ok((StatusCode::OK, Json(meta)))
-}
-
-#[axum_macros::debug_handler]
 pub async fn find_uom_by_id(
   State(state): State<Arc<AppState>>,
   Path(id): Path<Uuid>,
@@ -43,4 +33,13 @@ pub async fn find_uom_by_id(
     Err(e) => return Err(FindUomByIdError::InternalServerError(e)),
   };
   Ok((StatusCode::OK, Json(uom)))
+}
+
+#[axum_macros::debug_handler]
+pub async fn create_uom(
+  State(state): State<Arc<AppState>>,
+  Json(payload): Json<CreateUomPayload>,
+) -> Result<impl IntoResponse, CreateUomError> {
+  let meta = create_uom_command(payload, &state.write_db).await?;
+  Ok((StatusCode::OK, Json(meta)))
 }
