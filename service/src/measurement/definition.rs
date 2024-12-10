@@ -17,3 +17,14 @@ pub struct CreateUomPayload {
 pub struct CreateUomMeta {
   pub id: Uuid,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateUomPayload {
+  pub id: Uuid,
+  pub name: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UpdateUomMeta {
+  pub id: Uuid,
+}
