@@ -47,3 +47,20 @@ pub struct AttributeWithOptionsQueryOutput {
   pub attribute_option_id: Uuid,
   pub attribute_option_value: String,
 }
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all(deserialize = "snake_case"))]
+pub struct CreateAttributePayload {
+  pub name: String,
+  pub attribute_options: Vec<CreateAttributeOptionPayload>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateAttributeOptionPayload {
+  pub value: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CreateAttributeMeta {
+  pub id: Uuid,
+}

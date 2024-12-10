@@ -18,7 +18,9 @@ impl MigrationTrait for Migration {
             ForeignKey::create()
               .name("fk-attribute_option-attribute_id")
               .from(AttributeOption::Table, AttributeOption::AttributeId)
-              .to(Attribute::Table, Attribute::Id),
+              .to(Attribute::Table, Attribute::Id)
+              .on_delete(ForeignKeyAction::Cascade)
+              .on_update(ForeignKeyAction::Cascade),
           )
           .to_owned(),
       )

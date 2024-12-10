@@ -118,3 +118,25 @@ impl IntoResponse for ListPaginatedAttributesError {
       .into_response()
   }
 }
+
+#[derive(Error, Debug)]
+pub enum CreateAttributeError {
+  #[error("internal_server_error")]
+  InternalServerError(#[from] DbErr),
+}
+
+impl IntoResponse for CreateAttributeError {
+  fn into_response(self) -> Response {
+    let (status, code) = match self {
+      CreateAttributeError::InternalServerError(_) => {
+        (StatusCode::INTERNAL_SERVER_ERROR, self.to_string())
+      }
+    };
+
+    (
+      status,
+      error(code, Some("create_attribute_command".to_string())),
+    )
+      .into_response()
+  }
+}
