@@ -44,8 +44,8 @@ pub struct ListPaginatedAttributesQuery {
 pub struct AttributeWithOptionsQueryOutput {
   pub id: Uuid,
   pub name: String,
-  pub attribute_option_id: Uuid,
-  pub attribute_option_value: String,
+  pub attribute_option_id: Option<Uuid>,
+  pub attribute_option_value: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

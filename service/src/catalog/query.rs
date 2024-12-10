@@ -91,7 +91,7 @@ pub async fn list_paginated_attributes_query(
 
   let mut attribute_map: HashMap<Uuid, AttributeWithOptions> = HashMap::new();
 
-  for attribute in attributes {
+  for (_, attribute) in attributes.into_iter().enumerate() {
     let entry = attribute_map
       .entry(attribute.id)
       .or_insert(AttributeWithOptions {
@@ -100,10 +100,15 @@ pub async fn list_paginated_attributes_query(
         attribute_options: Vec::new(),
       });
 
-    entry.attribute_options.push(AttributeOptionDTO {
-      id: attribute.attribute_option_id,
-      value: attribute.attribute_option_value,
-    });
+    if let (Some(attribute_option_id), Some(attribute_option_value)) = (
+      attribute.attribute_option_id,
+      attribute.attribute_option_value,
+    ) {
+      entry.attribute_options.push(AttributeOptionDTO {
+        id: attribute_option_id,
+        value: attribute_option_value,
+      });
+    }
   }
 
   let attributes_with_options: Vec<AttributeWithOptions> = attribute_map.into_values().collect();

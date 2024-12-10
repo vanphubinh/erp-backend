@@ -5,9 +5,10 @@ use axum::{
   Json,
 };
 use infra::state::AppState;
+use sea_orm::{DbErr, TransactionTrait};
 use service::catalog::{
   command::create_attribute_command,
-  definition::{CreateAttributePayload, ListPaginatedAttributesQuery},
+  definition::{CreateAttributeMeta, CreateAttributePayload, ListPaginatedAttributesQuery},
   error::{CreateAttributeError, ListPaginatedAttributesError},
   query::list_paginated_attributes_query,
 };
@@ -27,6 +28,22 @@ pub async fn create_attribute(
   State(state): State<Arc<AppState>>,
   Json(payload): Json<CreateAttributePayload>,
 ) -> Result<impl IntoResponse, CreateAttributeError> {
-  let meta = create_attribute_command(payload, &state.write_db).await?;
-  Ok((StatusCode::CREATED, Json(meta)))
+  let meta = match state
+    .write_db
+    .transaction::<_, CreateAttributeMeta, DbErr>(|tx| {
+      Box::pin(async move {
+        let meta = create_attribute_command(payload, tx).await?;
+        Ok(meta)
+      })
+    })
+    .await
+  {
+    Ok(meta) => Ok((StatusCode::CREATED, Json(meta))),
+    Err(e) => {
+      return Err(CreateAttributeError::InternalServerError(DbErr::Custom(
+        e.to_string(),
+      )))
+    }
+  };
+  meta
 }
