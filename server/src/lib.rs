@@ -1,9 +1,15 @@
-use axum::Router;
+use axum::{
+  http::{header::CONTENT_TYPE, Method},
+  Router,
+};
 use infra::state::AppState;
 use sea_orm::{Database, DatabaseConnection, DbErr};
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
-use tower_http::trace::{self, TraceLayer};
+use tower_http::{
+  cors::{Any, CorsLayer},
+  trace::{self, TraceLayer},
+};
 use tracing::Level;
 
 #[tokio::main]
@@ -41,9 +47,21 @@ pub async fn start() {
   let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
   let tcp = TcpListener::bind(&addr).await.unwrap();
 
+  let cors = CorsLayer::new()
+    .allow_methods([
+      Method::GET,
+      Method::POST,
+      Method::OPTIONS,
+      Method::PUT,
+      Method::DELETE,
+    ])
+    .allow_origin(Any)
+    .allow_headers([CONTENT_TYPE]);
+
   let router = Router::new()
     .merge(interface::uom::route::new())
     .merge(interface::category::route::new())
+    .layer(cors)
     .layer(
       TraceLayer::new_for_http().make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO)),
     )
