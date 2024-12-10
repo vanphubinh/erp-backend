@@ -96,3 +96,25 @@ impl IntoResponse for UpdateCategoryError {
       .into_response()
   }
 }
+
+#[derive(Error, Debug)]
+pub enum ListPaginatedAttributesError {
+  #[error("internal_server_error")]
+  InternalServerError(#[from] DbErr),
+}
+
+impl IntoResponse for ListPaginatedAttributesError {
+  fn into_response(self) -> Response {
+    let (status, code) = match self {
+      ListPaginatedAttributesError::InternalServerError(_) => {
+        (StatusCode::INTERNAL_SERVER_ERROR, self.to_string())
+      }
+    };
+
+    (
+      status,
+      error(code, Some("list_paginated_attributes_query".to_string())),
+    )
+      .into_response()
+  }
+}

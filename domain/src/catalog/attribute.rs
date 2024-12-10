@@ -2,8 +2,12 @@
 
 use async_trait::async_trait;
 use infra::uuid::Uuid;
-use sea_orm::{entity::prelude::*, ActiveModelTrait, DerivePartialModel, FromQueryResult, Set};
+use sea_orm::{
+  entity::prelude::*, ActiveModelTrait, DerivePartialModel, FromQueryResult, Set, TryGetable,
+};
 use serde::{Deserialize, Serialize};
+
+use super::attribute_option::AttributeOptionDTO;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
 #[sea_orm(table_name = "attribute")]
@@ -18,12 +22,12 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
   #[sea_orm(has_many = "super::attribute_option::Entity")]
-  AttributeOption,
+  AttributeOptions,
 }
 
 impl Related<super::attribute_option::Entity> for Entity {
   fn to() -> RelationDef {
-    Relation::AttributeOption.def()
+    Relation::AttributeOptions.def()
   }
 }
 
@@ -37,10 +41,10 @@ impl ActiveModelBehavior for ActiveModel {
   }
 }
 
-#[derive(Debug, DerivePartialModel, Serialize, FromQueryResult)]
-#[sea_orm(entity = "Entity")]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct AttributeDTO {
+pub struct AttributeWithOptions {
   pub id: Uuid,
   pub name: String,
+  pub options: Vec<AttributeOptionDTO>,
 }

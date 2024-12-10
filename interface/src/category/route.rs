@@ -1,8 +1,10 @@
-use super::handler::list_paginated_categories;
+use super::handler::{list_paginated_attributes, list_paginated_categories};
 use axum::{routing::get, Router};
 use infra::state::AppState;
 use std::sync::Arc;
 
 pub fn new() -> Router<Arc<AppState>> {
-  Router::new().route("/categories.list", get(list_paginated_categories))
+  Router::new()
+    .route("/categories.list", get(list_paginated_categories))
+    .route("/attributes.list", get(list_paginated_attributes))
 }

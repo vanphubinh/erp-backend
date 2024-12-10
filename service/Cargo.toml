@@ -8,6 +8,6 @@ axum = { workspace = true }
 serde = { workspace = true }
 sea-orm = { workspace = true }
 thiserror = { workspace = true }
-
+tracing = { workspace = true }
 infra = { path = "../infra" }
 domain = { path = "../domain" }
